@@ -1,27 +1,27 @@
-import { Controller, Get, Post, Param, Res, Body } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Post, Param, Body, NotFoundException } from '@nestjs/common';
 import { CreateMessageDto } from './dtos/create-message.dto';
-
+import { MessageService } from './messages.service';
 @Controller('messages')
 export class MessagesController {
-    @Get()
-    listAllMessages(@Res() res: Response): void {
-        const messages = [
-            { id: 1, text: 'Hello World' },
-            { id: 2, text: 'NestJS is great!' },
-        ];
+    constructor(public messageService: MessageService) { }
 
-        res.status(200).json(messages);
+    @Get()
+    listAllMessages() {
+        return this.messageService.findAll();
     }
 
     @Post()
-    createMessage(@Body() body: CreateMessageDto): void {
-        console.log(body);
-
+    createMessage(@Body() body: CreateMessageDto) {
+        this.messageService.createMessage(body.content);
     }
 
     @Get('/:_id')
-    getMessage(@Param() params: any): void {
-        console.log(params._id);
+    async getMessage(@Param() params: any) {
+        const message = await this.messageService.findOne(params._id);
+        if (!message) {
+            throw new NotFoundException('Message not found!');
+        }
+
+        return message;
     }
 }
